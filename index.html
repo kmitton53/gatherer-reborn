@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gatherer Reborn</title>
+  <style>
+    :root {
+      --bg: #121214;
+      --card-bg: #1e1e24;
+      --accent: #ff6b35;
+      --border: #33333d;
+      --text: #e0e0e0;
+      --subtext: #a0a0ab;
+      --chip-bg: #2d2d38;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 16px;
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    p.sub {
+      font-size: 0.85rem;
+      color: var(--subtext);
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group h2 {
+      font-size: 1rem;
+      margin-bottom: 12px;
+      color: #fff;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+
+    .hint {
+      font-weight: normal;
+      font-size: 0.75rem;
+      color: var(--subtext);
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="number"], select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #141418;
+      color: #fff;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: normal;
+      cursor: pointer;
+      background: #141418;
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      font-size: 0.9rem;
+    }
+
+    .checkbox-label input {
+      accent-color: var(--accent);
+    }
+
+    .stat-row, .price-row, .mana-row, .cmc-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .stat-row select, .price-row select, .mana-row select, .cmc-row select { width: 35%; }
+    .stat-row input, .price-row input, .mana-row input, .cmc-row input { width: 65%; }
+    
+    .btn-secondary {
+      background: #2a2a35;
+      color: #fff;
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      margin-bottom: 8px;
+    }
+
+    .btn-remove {
+      background: #d63031;
+      color: #fff;
+      border: none;
+      padding: 0 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      height: 40px;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 14px;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .guide-toggle {
+      color: var(--accent);
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: underline;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    .guide-box {
+      display: none;
+      background: #141418;
+      border: 1px solid var(--border);
+      padding: 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-bottom: 12px;
+      line-height: 1.4;
+    }
+
+    /* Autocomplete Chips */
+    .autocomplete-container {
+      position: relative;
+    }
+    .suggestions-list {
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      background: #1e1e24;
+      border: 1px solid var(--border);
+      max-height: 180px;
+      overflow-y: auto;
+      z-index: 100;
+      border-radius: 0 0 6px 6px;
+    }
+    .suggestion-item {
+      padding: 8px 12px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    .suggestion-item:hover {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .chips-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+    .chip {
+      background: var(--chip-bg);
+      border: 1px solid var(--border);
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .chip span {
+      cursor: pointer;
+      font-weight: bold;
+      color: #ff6b35;
+    }
+
+    .compiled-box {
+      margin-top: 20px;
+      background: #000;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+      color: #70a1ff;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Gatherer Reborn</h1>
+  <p class="sub">Custom Gatherer search logic running over Scryfall's API.</p>
+
+  <form id="search-form">
+
+    <!-- 1. Card Name -->
+    <div class="form-group">
+      <h2>1. Card Name</h2>
+      <input type="text" id="card-name" placeholder="e.g. Atraxa">
+    </div>
+
+    <!-- 2. Text (Custom Syntax) -->
+    <div class="form-group">
+      <h2>2. Rules Text (Custom Logic)</h2>
+      <span class="hint">Use <b>"quotes"</b> for exact phrases, <b>/</b> for OR, <b>;</b> for AND, <b>{P}</b> for Phyrexian mana.</span>
+      
+      <label for="text-includes">Includes Text</label>
+      <input type="text" id="text-includes" placeholder='demon / "dragon" ; {P}'>
+
+      <label for="text-excludes">Does NOT Include Text</label>
+      <input type="text" id="text-excludes" placeholder='life / "flying"'>
+    </div>
+
+    <!-- 3. Type Line -->
+    <div class="form-group">
+      <h2>3. Type Line</h2>
+      <input type="text" id="card-type" placeholder="e.g. Legendary Creature Human">
+    </div>
+
+    <!-- 4. Color -->
+    <div class="form-group">
+      <h2>4. Color</h2>
+      <div class="checkbox-grid">
+        <label class="checkbox-label"><input type="checkbox" class="color-cb" value="W"> {W} White</label>
+        <label class="checkbox-label"><input type="checkbox" class="color-cb" value="U"> {U} Blue</label>
+        <label class="checkbox-label"><input type="checkbox" class="color-cb" value="B"> {B} Black</label>
+        <label class="checkbox-label"><input type="checkbox" class="color-cb" value="R"> {R} Red</label>
+        <label class="checkbox-label"><input type="checkbox" class="color-cb" value="G"> {G} Green</label>
+        <label class="checkbox-label"><input type="checkbox" id="color-c" value="C"> {C} Colorless</label>
+      </div>
+
+      <label for="color-mode">Color Matching Mode</label>
+      <select id="color-mode">
+        <option value="exact" selected>Exactly these colors</option>
+        <option value="include">Including these colors</option>
+        <option value="atmost">At most these colors</option>
+      </select>
+    </div>
+
+    <!-- 5. Commander Identity -->
+    <div class="form-group">
+      <h2>5. Commander Identity</h2>
+      <span class="hint">Selecting any identity automatically restricts results to Commander legality.</span>
+      <div class="checkbox-grid">
+        <label class="checkbox-label"><input type="checkbox" class="cmd-cb" value="W"> {W} White</label>
+        <label class="checkbox-label"><input type="checkbox" class="cmd-cb" value="U"> {U} Blue</label>
+        <label class="checkbox-label"><input type="checkbox" class="cmd-cb" value="B"> {B} Black</label>
+        <label class="checkbox-label"><input type="checkbox" class="cmd-cb" value="R"> {R} Red</label>
+        <label class="checkbox-label"><input type="checkbox" class="cmd-cb" value="G"> {G} Green</label>
+        <label class="checkbox-label"><input type="checkbox" id="cmd-c" value="C"> {C} Colorless</label>
+      </div>
+    </div>
+
+    <!-- 6. Mana Cost & Mana Value -->
+    <div class="form-group">
+      <h2>6. Mana Cost & Mana Value</h2>
+      <span class="guide-toggle" onclick="toggleGuide()">[Show Mana Cost Syntax Guide]</span>
+      <div class="guide-box" id="guide-box">
+        <b>Formatting Options:</b><br>
+        • Single Mana: <code>{R}</code>, <code>{G}</code>, <code>{2}</code><br>
+        • Hybrid: <code>{R/W}</code>, <code>{2/B}</code><br>
+        • Phyrexian: <code>{G/P}</code>, <code>{W/P}</code><br>
+        • Universal Phyrexian Search: Enter <code>{P}</code> to match any Phyrexian symbol. (Restricted dynamically by selected Commander/Color identity).
+      </div>
+      
+      <label for="mana-cost">Mana Cost (Specific Symbols)</label>
+      <div class="mana-row">
+        <select id="mana-op">
+          <option value="=" selected>Exactly (=)</option>
+          <option value=">=">At least (&ge;)</option>
+          <option value="<=">At most (&le;)</option>
+          <option value=">">Greater than (&gt;)</option>
+          <option value="<">Less than (&lt;)</option>
+          <option value="!=">Not equal to (&ne;)</option>
+        </select>
+        <input type="text" id="mana-cost" placeholder="e.g. {2}{R} or {P}">
+      </div>
+
+      <label for="mana-val">Mana Value / Total Cost (CMC)</label>
+      <div class="cmc-row">
+        <select id="cmc-op">
+          <option value="=" selected>Exactly (=)</option>
+          <option value=">=">At least (&ge;)</option>
+          <option value="<=">At most (&le;)</option>
+          <option value=">">Greater than (&gt;)</option>
+          <option value="<">Less than (&lt;)</option>
+          <option value="!=">Not equal to (&ne;)</option>
+        </select>
+        <input type="number" step="1" id="mana-val" placeholder="e.g. 4">
+      </div>
+    </div>
+
+    <!-- 7. Stats -->
+    <div class="form-group">
+      <h2>7. Stats</h2>
+      <div id="stats-container">
+        <!-- Dynamic rows added here -->
+      </div>
+      <button type="button" class="btn-secondary" id="add-stat-btn">+ Add Stat Filter</button>
+    </div>
+
+    <!-- 8. Games -->
+    <div class="form-group">
+      <h2>8. Games</h2>
+      <div class="checkbox-grid">
+        <label class="checkbox-label"><input type="checkbox" class="game-cb" value="paper"> Paper</label>
+        <label class="checkbox-label"><input type="checkbox" class="game-cb" value="arena"> MTG Arena</label>
+        <label class="checkbox-label"><input type="checkbox" class="game-cb" value="mtgo"> Magic Online (MTGO)</label>
+      </div>
+    </div>
+
+    <!-- 9. Formats -->
+    <div class="form-group">
+      <h2>9. Formats</h2>
+      <select id="format-select">
+        <option value="">-- Any Format --</option>
+        <option value="commander">Commander / EDH</option>
+        <option value="standard">Standard</option>
+        <option value="pioneer">Pioneer</option>
+        <option value="modern">Modern</option>
+        <option value="legacy">Legacy</option>
+        <option value="pauper">Pauper</option>
+        <option value="vintage">Vintage</option>
+      </select>
+    </div>
+
+    <!-- 10. Sets -->
+    <div class="form-group">
+      <h2>10. Sets</h2>
+      <span class="hint">Type set name or code to search. Selected sets automatically use OR logic.</span>
+      <div class="chips-container" id="set-chips"></div>
+      <div class="autocomplete-container">
+        <input type="text" id="set-input" placeholder="Type set name (e.g. Modern Horizons)..." autocomplete="off">
+        <div class="suggestions-list" id="set-suggestions" style="display:none;"></div>
+      </div>
+    </div>
+
+    <!-- 11. Rarity -->
+    <div class="form-group">
+      <h2>11. Rarity</h2>
+      <select id="rarity-select">
+        <option value="">-- Any Rarity --</option>
+        <option value="common">Common</option>
+        <option value="uncommon">Uncommon</option>
+        <option value="rare">Rare</option>
+        <option value="mythic">Mythic</option>
+      </select>
+    </div>
+
+    <!-- 12. Criteria -->
+    <div class="form-group">
+      <h2>12. Criteria</h2>
+      <span class="hint">Filter special properties.</span>
+      <div class="checkbox-grid">
+        <label class="checkbox-label"><input type="checkbox" class="crit-cb" value="is:reprint"> Reprint</label>
+        <label class="checkbox-label"><input type="checkbox" class="crit-cb" value="is:reserved"> Reserved List</label>
+        <label class="checkbox-label"><input type="checkbox" class="crit-cb" value="is:dfc"> Double-Faced (DFC)</label>
+        <label class="checkbox-label"><input type="checkbox" class="crit-cb" value="is:modal"> Modal (MDFC)</label>
+        <label class="checkbox-label"><input type="checkbox" class="crit-cb" value="is:permanent"> Permanent</label>
+        <label class="checkbox-label"><input type="checkbox" class="crit-cb" value="is:spell"> Non-Permanent Spell</label>
+      </div>
+    </div>
+
+    <!-- 13. Prices -->
+    <div class="form-group">
+      <h2>13. Prices (TCGPlayer USD)</h2>
+      <div class="price-row">
+        <select id="price-op">
+          <option value="<=">At most (&le;)</option>
+          <option value=">=">At least (&ge;)</option>
+          <option value="=">Exactly (=)</option>
+        </select>
+        <input type="number" step="0.01" id="price-val" placeholder="e.g. 5.00">
+      </div>
+    </div>
+
+    <button type="submit">Search on Scryfall</button>
+  </form>
+
+  <div class="compiled-box" id="compiled-preview">
+    Compiled Scryfall query will appear here...
+  </div>
+
+  <script>
+    // Global Scryfall Sets Store
+    let allSets = [];
+    let selectedSets = [];
+
+    // Fetch Sets List on Page Load
+    async function loadSets() {
+      try {
+        const response = await fetch('https://api.scryfall.com/sets');
+        const json = await response.json();
+        if (json.data) {
+          allSets = json.data.map(s => ({ code: s.code.toLowerCase(), name: s.name }));
+        }
+      } catch (err) {
+        console.warn('Could not load sets from Scryfall API');
+      }
+    }
+    loadSets();
+
+    // Syntax Guide Toggle
+    function toggleGuide() {
+      const box = document.getElementById('guide-box');
+      box.style.display = box.style.display === 'block' ? 'none' : 'block';
+    }
+
+    // --- 1. COLOR & COMMANDER COLLISION & MUTUAL EXCLUSION LOGIC ---
+    const colorCbs = document.querySelectorAll('.color-cb');
+    const colorC = document.getElementById('color-c');
+    const cmdCbs = document.querySelectorAll('.cmd-cb');
+    const cmdC = document.getElementById('cmd-c');
+
+    // Clear functions
+    function clearColor() { colorCbs.forEach(c => c.checked = false); colorC.checked = false; }
+    function clearCmd() { cmdCbs.forEach(c => c.checked = false); cmdC.checked = false; }
+
+    // Color listeners
+    colorCbs.forEach(cb => cb.addEventListener('change', () => { if (cb.checked) { colorC.checked = false; clearCmd(); } }));
+    colorC.addEventListener('change', () => { if (colorC.checked) { colorCbs.forEach(c => c.checked = false); clearCmd(); } });
+
+    // Commander listeners
+    cmdCbs.forEach(cb => cb.addEventListener('change', () => { if (cb.checked) { cmdC.checked = false; clearColor(); } }));
+    cmdC.addEventListener('change', () => { if (cmdC.checked) { cmdCbs.forEach(c => c.checked = false); clearColor(); } });
+
+    // --- 2. STATS DYNAMIC ROWS LOGIC ---
+    const statsContainer = document.getElementById('stats-container');
+    const addStatBtn = document.getElementById('add-stat-btn');
+
+    function createStatRow() {
+      const row = document.createElement('div');
+      row.className = 'stat-row';
+      row.innerHTML = `
+        <select class="stat-type">
+          <option value="pow">Power</option>
+          <option value="tou">Toughness</option>
+          <option value="pt">Stat Total (P+T)</option>
+          <option value="loyalty">Loyalty</option>
+          <option value="defense">Defense</option>
+        </select>
+        <select class="stat-op">
+          <option value="=">=</option>
+          <option value=">=">&ge;</option>
+          <option value="<=">&le;</option>
+          <option value=">">&gt;</option>
+          <option value="<">&lt;</option>
+          <option value="!=">&ne;</option>
+        </select>
+        <input type="text" class="stat-val" placeholder="e.g. 4">
+        <button type="button" class="btn-remove" onclick="this.parentElement.remove()">X</button>
+      `;
+      statsContainer.appendChild(row);
+    }
+    // Initialize 1 default stat row
+    createStatRow();
+    addStatBtn.addEventListener('click', createStatRow);
+
+    // --- 3. SETS AUTOCOMPLETE LOGIC ---
+    const setInput = document.getElementById('set-input');
+    const setSuggestions = document.getElementById('set-suggestions');
+    const setChipsContainer = document.getElementById('set-chips');
+
+    setInput.addEventListener('input', () => {
+      const query = setInput.value.trim().toLowerCase();
+      if (!query) { setSuggestions.style.display = 'none'; return; }
+
+      const matches = allSets.filter(s => s.name.toLowerCase().includes(query) || s.code.includes(query)).slice(0, 8);
+      if (matches.length === 0) { setSuggestions.style.display = 'none'; return; }
+
+      setSuggestions.innerHTML = matches.map(s => `
+        <div class="suggestion-item" onclick="addSetChip('${s.code}', '${s.name.replace(/'/g, "\\'")}')">
+          <b>${s.name}</b> (${s.code.toUpperCase()})
+        </div>
+      `).join('');
+      setSuggestions.style.display = 'block';
+    });
+
+    function addSetChip(code, name) {
+      if (!selectedSets.some(s => s.code === code)) {
+        selectedSets.push({ code, name });
+        renderSetChips();
+      }
+      setInput.value = '';
+      setSuggestions.style.display = 'none';
+    }
+
+    function removeSetChip(code) {
+      selectedSets = selectedSets.filter(s => s.code !== code);
+      renderSetChips();
+    }
+
+    function renderSetChips() {
+      setChipsContainer.innerHTML = selectedSets.map(s => `
+        <div class="chip">
+          ${s.name} (${s.code.toUpperCase()})
+          <span onclick="removeSetChip('${s.code}')">&times;</span>
+        </div>
+      `).join('');
+    }
+
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.autocomplete-container')) {
+        setSuggestions.style.display = 'none';
+      }
+    });
+
+    // --- 4. PHYREXIAN {P} COMPILER & COLLISION HELPERS ---
+    const ALL_PHYREXIAN = ['{W/P}', '{U/P}', '{B/P}', '{R/P}', '{G/P}', '{C/P}', '{2/W/P}', '{2/U/P}', '{2/B/P}', '{2/R/P}', '{2/G/P}'];
+    const COLOR_PHYREXIAN = {
+      'W': ['{W/P}', '{2/W/P}'],
+      'U': ['{U/P}', '{2/U/P}'],
+      'B': ['{B/P}', '{2/B/P}'],
+      'R': ['{R/P}', '{2/R/P}'],
+      'G': ['{G/P}', '{2/G/P}'],
+      'C': ['{C/P}']
+    };
+
+    function getActiveAllowedColors() {
+      let selectedCmd = Array.from(cmdCbs).filter(c => c.checked).map(c => c.value);
+      if (cmdC.checked) return ['C'];
+      if (selectedCmd.length > 0) return selectedCmd;
+
+      let selectedCol = Array.from(colorCbs).filter(c => c.checked).map(c => c.value);
+      if (colorC.checked) return ['C'];
+      if (selectedCol.length > 0) return selectedCol;
+
+      return null;
+    }
+
+    function buildPhyrexianClause(isRulesText = false) {
+      const allowedColors = getActiveAllowedColors();
+      let validSymbols = [];
+
+      if (!allowedColors) {
+        validSymbols = ALL_PHYREXIAN;
+      } else {
+        allowedColors.forEach(col => {
+          if (COLOR_PHYREXIAN[col]) validSymbols.push(...COLOR_PHYREXIAN[col]);
+        });
+      }
+
+      const prefix = isRulesText ? 'o:' : 'm:';
+      const parsedOrs = validSymbols.map(sym => `${prefix}"${sym}"`).join(' OR ');
+      return `(${parsedOrs})`;
+    }
+
+    // --- 5. CUSTOM TEXT RULES PARSER ---
+    function processSegment(segment) {
+      segment = segment.trim();
+      if (!segment) return '';
+
+      if (segment === '{P}') return buildPhyrexianClause(true);
+      if (segment.startsWith('"') && segment.endsWith('"')) return `o:${segment}`;
+
+      const matches = segment.match(/"[^"]+"|\S+/g) || [];
+      return matches.map(term => term === '{P}' ? buildPhyrexianClause(true) : `o:${term}`).join(' ');
+    }
+
+    function parseCustomText(inputText, isNegative = false) {
+      if (!inputText.trim()) return '';
+
+      if (isNegative) {
+        const terms = inputText.split(/[/;]/).map(s => s.trim()).filter(Boolean);
+
+        return terms.map(term => {
+          if (term === '{P}') {
+            const allowedColors = getActiveAllowedColors();
+            let validSymbols = !allowedColors ? ALL_PHYREXIAN : [];
+            if (allowedColors) {
+              allowedColors.forEach(col => { if (COLOR_PHYREXIAN[col]) validSymbols.push(...COLOR_PHYREXIAN[col]); });
+            }
+            return validSymbols.map(sym => `-o:"${sym}"`).join(' ');
+          }
+
+          if (term.startsWith('"') && term.endsWith('"')) {
+            return `-o:${term}`;
+          }
+
+          const words = term.match(/"[^"]+"|\S+/g) || [];
+          return words.map(w => w.startsWith('"') && w.endsWith('"') ? `-o:${w}` : `-o:${w}`).join(' ');
+        }).join(' ');
+
+      } else {
+        const andClauses = inputText.split(';').map(s => s.trim()).filter(Boolean);
+        const compiledAnds = andClauses.map(andClause => {
+          const orClauses = andClause.split('/').map(s => s.trim()).filter(Boolean);
+          if (orClauses.length > 1) {
+            const parsedOrs = orClauses.map(orClause => processSegment(orClause)).join(' OR ');
+            return `(${parsedOrs})`;
+          } else {
+            return processSegment(orClauses[0]);
+          }
+        });
+
+        return compiledAnds.join(' ');
+      }
+    }
+
+    // --- 6. MAIN FORM COMPILATION & SUBMIT ---
+    document.getElementById('search-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      let queryParts = [];
+
+      // 1. Name
+      const name = document.getElementById('card-name').value.trim();
+      if (name) queryParts.push(`name:"${name}"`);
+
+      // 2. Text
+      const incText = parseCustomText(document.getElementById('text-includes').value, false);
+      if (incText) queryParts.push(incText);
+
+      const excText = parseCustomText(document.getElementById('text-excludes').value, true);
+      if (excText) queryParts.push(excText);
+
+      // 3. Type Line
+      const type = document.getElementById('card-type').value.trim();
+      if (type) queryParts.push(`t:"${type}"`);
+
+      // 4. Color
+      if (colorC.checked) {
+        queryParts.push('c:c');
+      } else {
+        const checkedCols = Array.from(colorCbs).filter(cb => cb.checked).map(cb => cb.value);
+        if (checkedCols.length > 0) {
+          const mode = document.getElementById('color-mode').value;
+          const op = mode === 'exact' ? '=' : (mode === 'include' ? '>=' : '<=');
+          queryParts.push(`c${op}${checkedCols.join('')}`);
+        }
+      }
+
+      // 5. Commander Identity
+      if (cmdC.checked) {
+        queryParts.push('id:c');
+        queryParts.push('f:commander');
+      } else {
+        const checkedCmds = Array.from(cmdCbs).filter(cb => cb.checked).map(cb => cb.value);
+        if (checkedCmds.length > 0) {
+          queryParts.push(`id<=${checkedCmds.join('')}`);
+          queryParts.push('f:commander');
+        }
+      }
+
+      // 6a. Mana Cost
+      const manaInput = document.getElementById('mana-cost').value.trim();
+      if (manaInput) {
+        if (manaInput === '{P}') {
+          queryParts.push(buildPhyrexianClause(false));
+        } else {
+          const manaOp = document.getElementById('mana-op').value;
+          queryParts.push(`m${manaOp}"${manaInput}"`);
+        }
+      }
+
+      // 6b. Mana Value (CMC)
+      const cmcInput = document.getElementById('mana-val').value.trim();
+      if (cmcInput !== '') {
+        const cmcOp = document.getElementById('cmc-op').value;
+        queryParts.push(`cmc${cmcOp}${cmcInput}`);
+      }
+
+      // 7. Stats
+      document.querySelectorAll('.stat-row').forEach(row => {
+        const type = row.querySelector('.stat-type').value;
+        const op = row.querySelector('.stat-op').value;
+        const val = row.querySelector('.stat-val').value.trim();
+        if (val) queryParts.push(`${type}${op}${val}`);
+      });
+
+      // 8. Games
+      const checkedGames = Array.from(document.querySelectorAll('.game-cb')).filter(cb => cb.checked).map(cb => cb.value);
+      checkedGames.forEach(game => queryParts.push(`game:${game}`));
+
+      // 9. Formats
+      const format = document.getElementById('format-select').value;
+      if (format && !queryParts.includes('f:commander')) {
+        queryParts.push(`f:${format}`);
+      }
+
+      // 10. Sets
+      if (selectedSets.length > 0) {
+        const setQuery = selectedSets.map(s => `s:${s.code}`).join(' OR ');
+        queryParts.push(`(${setQuery})`);
+      }
+
+      // 11. Rarity
+      const rarity = document.getElementById('rarity-select').value;
+      if (rarity) queryParts.push(`r:${rarity}`);
+
+      // 12. Criteria
+      document.querySelectorAll('.crit-cb').forEach(cb => {
+        if (cb.checked) queryParts.push(cb.value);
+      });
+
+      // 13. Prices
+      const priceVal = document.getElementById('price-val').value.trim();
+      if (priceVal) {
+        const priceOp = document.getElementById('price-op').value;
+        queryParts.push(`usd${priceOp}${priceVal}`);
+      }
+
+      // Final Compilation Output
+      const fullQuery = queryParts.join(' ');
+      document.getElementById('compiled-preview').innerText = fullQuery || 'Empty Search Query';
+
+      if (fullQuery) {
+        const targetUrl = `https://scryfall.com/search?q=${encodeURIComponent(fullQuery)}`;
+        window.open(targetUrl, '_blank');
+      }
+    });
+  </script>
+</body>
+</html>
